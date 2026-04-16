@@ -1,9 +1,12 @@
 /**
- * Cloudflare Worker — v2
+ * Cloudflare Worker — v2 (hybrid: API + webapp static server)
  *
  * Endpoints:
- *   POST /api/submit  — receives form data, writes to Queue, returns 202
- *   GET  /api/poll    — reads from Queue (v2: Hermes cron calls this)
+ *   GET  /            — serves webapp HTML (from GitHub raw)
+ *   GET  /index.html  — alias for /
+ *   POST /api/submit  — receives form data, writes to KV queue, returns 202
+ *   GET  /api/poll    — reads from KV queue (Hermes cron calls this)
+ *   POST /api/complete — marks job as done (Hermes calls after processing)
  */
 
 export interface Env {
@@ -71,6 +74,11 @@ export default {
 
     if (request.method === "POST" && path === "/api/complete") {
       return handleComplete(request, env, headers);
+    }
+
+    // Serve webapp static HTML for root / and /index.html
+    if (request.method === "GET" && (path === "/" || path === "/index.html")) {
+      return serveWebapp(headers);
     }
 
     return new Response("Not Found", { status: 404, headers });
@@ -285,4 +293,28 @@ function jsonResponse(body: unknown, status: number, headers: HeadersInit): Resp
     status,
     headers: { "Content-Type": "application/json", ...headers },
   });
+}
+
+/**
+ * Serve webapp HTML fetched from GitHub raw content.
+ * GET / or GET /index.html
+ */
+async function serveWebapp(headers: HeadersInit): Promise<Response> {
+  const htmlUrl =
+    "https://raw.githubusercontent.com/westhong/abdominal-ultrasound/main/webapp/index.html";
+
+  try {
+    const resp = await fetch(htmlUrl);
+    if (!resp.ok) {
+      return new Response("Failed to load webapp", { status: 502, headers });
+    }
+    const html = await resp.text();
+    return new Response(html, {
+      status: 200,
+      headers: { "Content-Type": "text/html; charset=utf-8", ...headers },
+    });
+  } catch (err) {
+    console.error("[serveWebapp] fetch failed:", err);
+    return new Response("Service unavailable", { status: 503, headers });
+  }
 }
