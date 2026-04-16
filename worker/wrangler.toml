@@ -1,0 +1,13 @@
+name = "abdominal-us-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[observability]
+enabled = true
+
+[vars]
+# TODO (v2): Set ALLOWED_ORIGIN to the production domain
+# ALLOWED_ORIGIN = "https://abdominal-us.example.com"
+
+# Environment secrets (set via `wrangler secret put`):
+# MQ_API_TOKEN — bearer token for /api/poll (v2+)

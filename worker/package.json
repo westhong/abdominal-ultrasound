@@ -1,0 +1,16 @@
+{
+  "name": "abdominal-us-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker — receives form submits and writes to Queue",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0",
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "typescript": "^5.0.0"
+  }
+}
