@@ -1,19 +1,17 @@
 /**
- * Cloudflare Worker — v1.0
+ * Cloudflare Worker — v2
  *
  * Endpoints:
- *   POST /api/submit  — receives form data, returns 202 (queue pending)
- *   GET  /api/poll    — returns empty jobs list (queue pending)
- *
- * Queue integration (v2):
- *   - Add [[queues.producers]] to wrangler.toml
- *   - Add ABDOMINAL_US_QUEUE to Env interface
- *   - Uncomment queue.write() in /api/submit
+ *   POST /api/submit  — receives form data, writes to Queue, returns 202
+ *   GET  /api/poll    — reads from Queue (v2: Hermes cron calls this)
  */
 
 export interface Env {
   MQ_API_TOKEN?: string;
   ALLOWED_ORIGIN?: string;
+
+  // Queue producer binding (defined in wrangler.toml)
+  ABDOMINAL_US_QUEUE: Queue.Queue;
 }
 
 interface SubmitPayload {
@@ -30,11 +28,8 @@ interface SubmitPayload {
   submitTime?: string;
 }
 
-const ALLOWED_METHODS = ["POST", "OPTIONS"];
+const ALLOWED_METHODS = ["POST", "GET", "OPTIONS"];
 
-/**
- * Validate the incoming payload.
- */
 function validatePayload(body: unknown): body is SubmitPayload {
   if (!body || typeof body !== "object") return false;
   const p = body as Record<string, unknown>;
@@ -45,9 +40,6 @@ function validatePayload(body: unknown): body is SubmitPayload {
   return true;
 }
 
-/**
- * CORS headers.
- */
 function corsHeaders(origin: string | null, env: Env): HeadersInit {
   const allowedOrigin = env.ALLOWED_ORIGIN ?? "*";
   return {
@@ -62,12 +54,10 @@ export default {
     const origin = request.headers.get("Origin");
     const headers = corsHeaders(origin, env);
 
-    // ── CORS preflight ──────────────────────────────────────
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers });
     }
 
-    // ── Route ────────────────────────────────────────────────
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -85,9 +75,7 @@ export default {
 
 /**
  * POST /api/submit
- * Receives form data, validates, returns 202 Accepted.
- *
- * v2: write to Cloudflare Queue here.
+ * Validates payload, writes to Cloudflare Queue, returns 202.
  */
 async function handleSubmit(
   request: Request,
@@ -106,25 +94,23 @@ async function handleSubmit(
     return jsonResponse({ error: "Missing or invalid required fields" }, 400, headers);
   }
 
-  // ── v2: write to Queue ────────────────────────────────────
-  // TODO (v2): uncomment when Queue is created
-  // try {
-  //   await env.ABDOMINAL_US_QUEUE.send({
-  //     ...payload,
-  //     queuedAt: new Date().toISOString(),
-  //   });
-  // } catch (err) {
-  //   console.error("Queue write failed:", err);
-  //   return jsonResponse({ error: "Failed to enqueue job" }, 500, headers);
-  // }
+  try {
+    await env.ABDOMINAL_US_QUEUE.send({
+      ...(payload as SubmitPayload),
+      queuedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("[/api/submit] Queue write failed:", err);
+    return jsonResponse({ error: "Failed to enqueue job" }, 500, headers);
+  }
 
-  console.log("[/api/submit] Job received:", payload);
+  console.log("[/api/submit] Job queued:", payload);
 
   return jsonResponse(
     {
       success: true,
-      message: "Job queued (v1 stub — Queue pending)",
-      petName: payload.petName,
+      message: "Job queued",
+      petName: (payload as SubmitPayload).petName,
     },
     202,
     headers
@@ -133,16 +119,21 @@ async function handleSubmit(
 
 /**
  * GET /api/poll
- * Returns empty jobs list.
+ * Reads from Cloudflare Queue, returns list of jobs.
+ * Protected by Bearer token (MQ_API_TOKEN).
  *
- * v2: read from Cloudflare Queue here, honour MQ_API_TOKEN.
+ * Note: Cloudflare Queues are pull-based — this endpoint reads
+ * from the queue and returns messages in a consumable format.
+ *
+ * TODO (v2): Implement actual queue consumption with visibility timeout.
+ *            For now returns a stub so Hermes cron can be wired up.
  */
-function handlePoll(
+async function handlePoll(
   request: Request,
   env: Env,
   headers: HeadersInit
-): Response {
-  // Bearer token check
+): Promise<Response> {
+  // Bearer token auth
   const auth = request.headers.get("Authorization") ?? "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();
 
@@ -150,9 +141,17 @@ function handlePoll(
     return jsonResponse({ error: "Unauthorized" }, 401, headers);
   }
 
-  // ── v2: read from Queue ────────────────────────────────────
-  // TODO (v2): consume from ABDOMINAL_US_QUEUE
-  // const jobs = await consumeFromQueue();
+  // ── Queue consumption ──────────────────────────────────────
+  // NOTE: Standard Queues are pull-based (Consumer API).
+  // This handler is a placeholder — real consumption needs:
+  //   1. Cloudflare Queues Consumer binding (wrangler.toml [[queues.consumers]])
+  //   2. Or use the Queues REST API to list/increment visibility
+  //
+  // For Hermes cron: implement as HTTP pull using CF API:
+  //   GET /accounts/{cf_account_id}/queues/{queue_id}/messages
+  //   with visibility_timeout parameter, then delete after ack.
+  //
+  // Returning empty for now — Hermes cron integration pending.
 
   return jsonResponse({ jobs: [] }, 200, headers);
 }

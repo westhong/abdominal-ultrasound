@@ -5,9 +5,15 @@ compatibility_date = "2024-01-01"
 [observability]
 enabled = true
 
+# Queue — producer binding
+# (Hermes cron consumes via /api/poll which reads from this queue in v2)
+[[queues.producers]]
+queue = "abdominal-us-report-queue"
+binding = "ABDOMINAL_US_QUEUE"
+
 [vars]
-# TODO (v2): Set ALLOWED_ORIGIN to the production domain
+# TODO (production): Set ALLOWED_ORIGIN to the production domain
 # ALLOWED_ORIGIN = "https://abdominal-us.example.com"
 
 # Environment secrets (set via `wrangler secret put`):
-# MQ_API_TOKEN — bearer token for /api/poll (v2+)
+# MQ_API_TOKEN — bearer token for /api/poll

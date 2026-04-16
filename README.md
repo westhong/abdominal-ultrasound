@@ -24,8 +24,8 @@ Email → 小波 (mdip22351@gmail.com)
 
 | 版本 | 狀態 | 說明 |
 |------|------|------|
-| **v1.0** | ✅ 已部署 | Worker stub（/api/submit 返回 202），Queue 待建立 |
-| v2 | ⏳ 規劃中 | Worker + Queue 完整串接 |
+| **v2.0** | ✅ 已部署 | `/api/submit` 寫入 Queue，`/api/poll` stub 返回 `{"jobs":[]}` |
+| v2.1 | ⏳ 規劃中 | Hermes cron 串接 `/api/poll` + Queue consumption |
 
 ## 目錄結構
 
@@ -65,14 +65,14 @@ CF_ACCOUNT_ID=***
 GITHUB_TOKEN=***
 ```
 
-## Worker Endpoints (v1.0 stub)
+## Worker Endpoints (v2.0)
 
 | Method | Path | 說明 |
 |--------|------|------|
-| POST | `/api/submit` | 接收表單，驗證，返回 202（Queue 未啟用） |
-| GET | `/api/poll` | 返回 `{"jobs":[]}`（Queue 未啟用） |
+| POST | `/api/submit` | 接收表單，寫入 `abdominal-us-report-queue`，返回 202 |
+| GET | `/api/poll` | 返回 `{"jobs":[]}`（v2.1: Hermes cron 串接 Queue consumption） |
 
-**v2**：POST 寫入 Queue，GET 從 Queue 讀取。
+**Worker URL:** `https://abdominal-us-worker.west-wong.workers.dev`
 
 ## 部署
 
@@ -86,8 +86,8 @@ npx wrangler deploy
 
 1. [x] 建立資料夾結構
 2. [x] 建立 GitHub Repo + commit 代碼
-3. [ ] 建立 Cloudflare Queue (`abdominal-us-report-queue`)
-4. [ ] 部署 Cloudflare Worker + 配置 `MQ_API_TOKEN`
+3. [x] 建立 Cloudflare Queue (`abdominal-us-report-queue`)
+4. [x] 部署 Cloudflare Worker + 配置 `MQ_API_TOKEN`
 5. [x] 設定環境變量 (`~/.hermes/.env`)
 6. [ ] 部署 Hermes Cron Job
 7. [ ] End-to-end 測試

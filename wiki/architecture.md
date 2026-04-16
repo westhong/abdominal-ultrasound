@@ -150,7 +150,8 @@ abdominal-ultrasound/
 | `GITHUB_TOKEN` | `~/.hermes/.env` | Git push | ✅ 已設定 |
 | `CF_API_TOKEN` | `~/.hermes/.env` | Cloudflare Workers/Pages deploy | ✅ 已設定 |
 | `CF_ACCOUNT_ID` | `~/.hermes/.env` | Cloudflare API | ✅ 已設定 (`7cb4af0fb54de98010374a8596b96bcd`) |
-| `MQ_API_TOKEN` | `~/.hermes/.env` + `wrangler secret` | Worker API 認證 | ⏳ 待建立 |
+| `MQ_API_TOKEN` | `~/.hermes/.env` + `wrangler secret` | Worker API 認證 | ✅ 已設定 (8t8je8...) |
+| `WORKER_POLL_URL` | `~/.hermes/.env` | Hermes cron 呼叫 URL | ✅ 已設定 |
 
 **全部唔 commit**，`.gitignore` 已排除。
 
@@ -194,17 +195,18 @@ Cloudflare Queue (完全唔暴露俾 internet)
 
 ### Hermes 端（`~/.hermes/.env`）
 ```
-GITHUB_TOKEN=github_pat_***
-MQ_API_TOKEN=***
-CF_ACCOUNT_ID=***
-WORKER_POLL_URL=https://abdominal-us-worker.xxx.workers.dev/api/poll
+GITHUB_TOKEN=***
+CF_API_TOKEN=***
+CF_ACCOUNT_ID=7cb4af0fb54de98010374a8596b96bcd
+MQ_API_TOKEN=***          # Worker API Bearer Token
+WORKER_POLL_URL=https://abdominal-us-worker.west-wong.workers.dev/api/poll
 REPORT_EMAIL_TO=mdip22351@gmail.com
 REPORT_EMAIL_FROM=westhong@gmail.com
 ```
 
 ### Cloudflare Worker 端（`wrangler secret`）
 ```
-wrangler secret put MQ_API_TOKEN
+MQ_API_TOKEN=***          # 已設定 ✅
 ```
 
 ---
@@ -234,10 +236,10 @@ wrangler secret put MQ_API_TOKEN
 ## 部署順序
 
 1. [x] 建立資料夾結構
-2. [ ] 建立 GitHub Repo (`westhong/abdominal-ultrasound`)
-3. [ ] 上架代碼到 GitHub
-4. [ ] 建立 Cloudflare Queue (`abdominal-us-report-queue`)
-5. [ ] 部署 Cloudflare Worker + 配置 `MQ_API_TOKEN`
-6. [x] 設定環境變量 (`~/.hermes/.env`) — GITHUB_TOKEN ✅ / CF_API_TOKEN ✅ / CF_ACCOUNT_ID ✅
+2. [x] 建立 GitHub Repo (`westhong/abdominal-ultrasound`)
+3. [x] 上架代碼到 GitHub
+4. [x] 建立 Cloudflare Queue (`abdominal-us-report-queue`)
+5. [x] 部署 Cloudflare Worker + 配置 `MQ_API_TOKEN`
+6. [x] 設定環境變量 (`~/.hermes/.env`) — GITHUB_TOKEN ✅ / CF_API_TOKEN ✅ / CF_ACCOUNT_ID ✅ / MQ_API_TOKEN ✅ / WORKER_POLL_URL ✅
 7. [ ] 部署 Hermes Cron Job
 8. [ ] End-to-end 測試

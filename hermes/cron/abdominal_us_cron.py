@@ -28,7 +28,7 @@ MQ_API_TOKEN     = os.getenv("MQ_API_TOKEN", "")
 CF_ACCOUNT_ID    = os.getenv("CF_ACCOUNT_ID", "")
 REPORT_EMAIL_TO  = os.getenv("REPORT_EMAIL_TO", "mdip22351@gmail.com")
 REPORT_EMAIL_FROM = os.getenv("REPORT_EMAIL_FROM", "westhong@gmail.com")
-WORKER_POLL_URL = os.getenv("WORKER_POLL_URL", "")  # e.g. https://abdominal-us-worker.xxx.workers.dev/api/poll
+WORKER_POLL_URL = "https://abdominal-us-worker.west-wong.workers.dev/api/poll"
 
 # ── Payload 模板 (system prompt) ─────────────────────────────────────────────
 # 這段會傳俾 default agent (MiniMax-M2.7) 生成描述
