@@ -5,11 +5,10 @@ compatibility_date = "2024-01-01"
 [observability]
 enabled = true
 
-# Queue — producer binding
-# (Hermes cron consumes via /api/poll which reads from this queue in v2)
-[[queues.producers]]
-queue = "abdominal-us-report-queue"
-binding = "ABDOMINAL_US_QUEUE"
+# KV — job queue storage (用於 /api/poll)
+[[kv_namespaces]]
+binding = "ABDOMINAL_US_JOBS"
+id = "16a867d46ea048a8a472af40c9b70e6d"
 
 [vars]
 # TODO (production): Set ALLOWED_ORIGIN to the production domain
